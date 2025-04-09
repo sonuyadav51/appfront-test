@@ -4,15 +4,16 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Product;
+use Illuminate\Support\Facades\Http;
 
 class ProductController extends Controller
 {
     public function index()
     {
-        $products = Product::all();
-        $exchangeRate = $this->getExchangeRate();
+         $products = Product::paginate(config('app.pagination_limit'));
+         $exchangeRate = $this->getExchangeRate();
 
-        return view('products.list', compact('products', 'exchangeRate'));
+         return view('products.list', compact('products', 'exchangeRate'));
     }
 
     public function show(Request $request)

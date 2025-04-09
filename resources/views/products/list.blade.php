@@ -20,6 +20,26 @@
             font-size: 1.2rem;
             color: #7f8c8d;
         }
+        a {
+            text-decoration: none !important;
+        }
+        .pagination .inline-flex.items-center.px-4 {
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        .pagination span[aria-current="page"] {
+            background-color: #3490dc !important;
+            color: white !important;
+            border-color: #3490dc !important;
+        }
+
+         .pagination svg,
+          nav svg {
+                width: 14px !important;
+                height: 14px !important;
+            }
+       
+
     </style>
 </head>
 <body>
@@ -47,6 +67,10 @@
                     <p>No products found.</p>
                 </div>
             @endforelse
+        </div>
+        
+        <div style="margin-top: 20px; text-align: center;">
+            {{ $products->links() }}
         </div>
 
         <div style="margin-top: 20px; text-align: center; font-size: 0.9rem; color: #7f8c8d;">
