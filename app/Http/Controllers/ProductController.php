@@ -20,6 +20,9 @@ class ProductController extends Controller
     {
         $id = $request->route('product_id');
         $product = Product::find($id);
+        if(!$product) {
+            return view('errors.404');
+        }
         $exchangeRate = $this->getExchangeRate();
 
         return view('products.show', compact('product', 'exchangeRate'));
