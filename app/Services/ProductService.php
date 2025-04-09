@@ -17,7 +17,7 @@ class ProductService
         protected NotificationService $notificationService
     ) {}
 
-    public function updateProduct(Product $product, array $data): Product
+    public function updateProduct(Product $product, array $data,string $email = 'admin@example.com'): Product
     {
         return DB::transaction(function () use ($product, $data) {
             $oldPrice = $product->price;
@@ -28,7 +28,8 @@ class ProductService
                     $this->notificationService->sendPriceChangeNotification(
                         $product,
                         $oldPrice,
-                        $product->price
+                        $product->price,
+                        $email
                     );
                 } catch (\Exception $e) {
                     Log::error('Notification failed: ' . $e->getMessage());
