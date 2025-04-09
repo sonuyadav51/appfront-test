@@ -66,7 +66,8 @@ class UpdateProduct extends Command
             $this->info("No changes provided. Product remains unchanged.");
             return 0;
         }
-        $this->productService->updateProduct($product, $data);
+        $notificationEmail = config('app.price_notification_email');
+        $this->productService->updateProduct($product, $data,$notificationEmail);
 
         $this->info("Product updated successfully.");
         return 0;

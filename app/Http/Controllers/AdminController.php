@@ -53,7 +53,8 @@ class AdminController extends Controller
     public function updateProduct(UpdateProductRequest $request, $id)
     {
         $product = Product::findOrFail($id);
-        $updated = $this->productService->updateProduct($product, $request->only(['name', 'description', 'price']));
+        $notificationEmail = config('app.price_notification_email');
+        $updated = $this->productService->updateProduct($product, $request->only(['name', 'description', 'price']),$notificationEmail);
 
         if ($request->hasFile('image')) {
             $path = $this->fileUploadService->upload($request->file('image'));
