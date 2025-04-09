@@ -43,20 +43,8 @@ class AdminController extends Controller
         return view('admin.edit_product', compact('product'));
     }
 
-    public function updateProduct(Request $request, $id)
+    public function updateProduct(UpdateProductRequest $request, $id)
     {
-        // Validate the name field
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|min:3',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()
-                ->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
         $product = Product::find($id);
 
         // Store the old price before updating
@@ -106,19 +94,8 @@ class AdminController extends Controller
         return view('admin.add_product');
     }
 
-    public function addProduct(Request $request)
+    public function addProduct(StoreProductRequest  $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|min:3',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()
-                ->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
         $product = Product::create([
             'name' => $request->name,
             'description' => $request->description,
