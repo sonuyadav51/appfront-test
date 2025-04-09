@@ -5,12 +5,19 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Product;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-use App\Jobs\SendPriceChangeNotification;
+use Illuminate\Support\Facades\Log;;
+use App\Services\ProductService;
+use App\Services\FileUploadService;
+use App\Http\Requests\UpdateProductRequest;
+use App\Http\Requests\StoreProductRequest;
 
 class AdminController extends Controller
 {
+    public function __construct(
+        protected ProductService $productService,
+        protected FileUploadService $fileUploadService
+    ) {}
+
     public function loginPage()
     {
         return view('login');
@@ -39,55 +46,20 @@ class AdminController extends Controller
 
     public function editProduct($id)
     {
-        $product = Product::find($id);
+        $product = Product::findOrFail($id);
         return view('admin.edit_product', compact('product'));
     }
 
-    public function updateProduct(Request $request, $id)
+    public function updateProduct(UpdateProductRequest $request, $id)
     {
-        // Validate the name field
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|min:3',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()
-                ->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        $product = Product::find($id);
-
-        // Store the old price before updating
-        $oldPrice = $product->price;
-
-        $product->update($request->all());
+        $product = Product::findOrFail($id);
+        $notificationEmail = config('app.price_notification_email');
+        $updated = $this->productService->updateProduct($product, $request->only(['name', 'description', 'price']),$notificationEmail);
 
         if ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $filename = $file->getClientOriginalExtension();
-            $file->move(public_path('uploads'), $filename);
-            $product->image = 'uploads/' . $filename;
-        }
-
-        $product->save();
-
-        // Check if price has changed
-        if ($oldPrice != $product->price) {
-            // Get notification email from env
-            $notificationEmail = env('PRICE_NOTIFICATION_EMAIL', 'admin@example.com');
-
-            try {
-                SendPriceChangeNotification::dispatch(
-                    $product,
-                    $oldPrice,
-                    $product->price,
-                    $notificationEmail
-                );
-            } catch (\Exception $e) {
-                 Log::error('Failed to dispatch price change notification: ' . $e->getMessage());
-            }
+            $path = $this->fileUploadService->upload($request->file('image'));
+            $updated->image = $path;
+            $updated->save();
         }
 
         return redirect()->route('admin.products')->with('success', 'Product updated successfully');
@@ -95,9 +67,8 @@ class AdminController extends Controller
 
     public function deleteProduct($id)
     {
-        $product = Product::find($id);
-        $product->delete();
-
+        $product = Product::findOrFail($id);
+        $this->productService->deleteProduct($product);
         return redirect()->route('admin.products')->with('success', 'Product deleted successfully');
     }
 
@@ -106,30 +77,13 @@ class AdminController extends Controller
         return view('admin.add_product');
     }
 
-    public function addProduct(Request $request)
+    public function addProduct(StoreProductRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|min:3',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()
-                ->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        $product = Product::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'price' => $request->price
-        ]);
+        $product = $this->productService->createProduct($request->only(['name', 'description', 'price']));
 
         if ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $filename = $file->getClientOriginalExtension();
-            $file->move(public_path('uploads'), $filename);
-            $product->image = 'uploads/' . $filename;
+            $path = $this->fileUploadService->upload($request->file('image'));
+            $product->image = $path;
         } else {
             $product->image = 'product-placeholder.jpg';
         }
