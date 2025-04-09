@@ -19,7 +19,7 @@ class ProductService
 
     public function updateProduct(Product $product, array $data,string $email = 'admin@example.com'): Product
     {
-        return DB::transaction(function () use ($product, $data) {
+        return DB::transaction(function () use ($product, $data, $email) {
             $oldPrice = $product->price;
             $product->update($data);
 
